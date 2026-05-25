@@ -138,7 +138,10 @@ def launch_setup(context: LaunchContext, ld: LaunchDescription) -> None:
         package="spot_driver",
         executable="state_publisher_node",
         output="screen",
-        parameters=[configured_params],
+        parameters=[
+            configured_params,
+            {"publish_image_snapshot_transforms": LaunchConfiguration("publish_image_snapshot_transforms")},
+        ],
         namespace=spot_name,
     )
     ld.add_action(spot_robot_state_publisher)

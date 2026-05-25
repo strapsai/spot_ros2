@@ -27,6 +27,7 @@ constexpr auto kParameterNameUncompressImages = "uncompress_images";
 constexpr auto kParameterNamePublishCompressedImages = "publish_compressed_images";
 constexpr auto kParameterNamePublishDepthImages = "publish_depth";
 constexpr auto kParameterNamePublishDepthRegisteredImages = "publish_depth_registered";
+constexpr auto kParameterNamePublishImageSnapshotTransforms = "publish_image_snapshot_transforms";
 constexpr auto kParameterPreferredOdomFrame = "preferred_odom_frame";
 constexpr auto kParameterTFRoot = "tf_root";
 constexpr auto kParameterSpotName = "spot_name";
@@ -222,6 +223,11 @@ bool RclcppParameterInterface::getPublishDepthImages() const {
 bool RclcppParameterInterface::getPublishDepthRegisteredImages() const {
   return declareAndGetParameter<bool>(node_, kParameterNamePublishDepthRegisteredImages,
                                       kDefaultPublishDepthRegisteredImages);
+}
+
+bool RclcppParameterInterface::getPublishImageSnapshotTransforms() const {
+  return declareAndGetParameter<bool>(node_, kParameterNamePublishImageSnapshotTransforms,
+                                      kDefaultPublishImageSnapshotTransforms);
 }
 
 std::string RclcppParameterInterface::getPreferredOdomFrame() const {

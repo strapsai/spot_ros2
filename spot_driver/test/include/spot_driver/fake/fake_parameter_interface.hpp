@@ -37,6 +37,8 @@ class FakeParameterInterface : public ParameterInterfaceBase {
 
   bool getPublishDepthRegisteredImages() const override { return publish_depth_registered_images; }
 
+  bool getPublishImageSnapshotTransforms() const override { return publish_image_snapshot_transforms; }
+
   std::string getPreferredOdomFrame() const override { return kDefaultPreferredOdomFrame; }
 
   std::string getTFRoot() const override { return "odom"; }
@@ -82,6 +84,7 @@ class FakeParameterInterface : public ParameterInterfaceBase {
   bool publish_rgb_images = ParameterInterfaceBase::kDefaultPublishRGBImages;
   bool publish_depth_images = ParameterInterfaceBase::kDefaultPublishDepthImages;
   bool publish_depth_registered_images = ParameterInterfaceBase::kDefaultPublishDepthRegisteredImages;
+  bool publish_image_snapshot_transforms = ParameterInterfaceBase::kDefaultPublishImageSnapshotTransforms;
   bool gripperless = ParameterInterfaceBase::kDefaultGripperless;
   std::string spot_name;
 };

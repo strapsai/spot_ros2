@@ -28,11 +28,13 @@ using ::testing::Return;
 namespace spot_ros2::test {
 class MockMiddlewareHandle : public images::SpotImagePublisher::MiddlewareHandle {
  public:
-  MOCK_METHOD(void, createPublishers, (const std::set<ImageSource>& image_sources, bool, bool), (override));
+  MOCK_METHOD(void, createPublishers, (const std::set<ImageSource>& image_sources, bool, bool, bool), (override));
   MOCK_METHOD((tl::expected<void, std::string>), publishImages,
               ((const std::map<ImageSource, ImageWithCameraInfo>&),
                (const std::map<ImageSource, CompressedImageWithCameraInfo>&)),
               (override));
+  MOCK_METHOD((tl::expected<void, std::string>), publishImageSnapshotTransforms,
+              (const tf2_msgs::msg::TFMessage&), (override));
 };
 
 class SpotImagePubNodeTestFixture : public ::testing::Test {

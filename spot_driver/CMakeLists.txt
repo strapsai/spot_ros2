@@ -28,6 +28,7 @@ set(THIS_PACKAGE_INCLUDE_ROS_DEPENDS
   rclcpp_components
   sensor_msgs
   tf2_eigen
+  tf2_msgs
   tf2_ros
   tl_expected
   spot_msgs

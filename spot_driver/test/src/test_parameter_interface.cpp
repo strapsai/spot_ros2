@@ -218,6 +218,8 @@ TEST_F(RclcppParameterInterfaceEnvVarTest, GetSpotConfigFromParameters) {
   node_->declare_parameter("publish_depth", publish_depth_images_parameter);
   constexpr auto publish_depth_registered_images_parameter = false;
   node_->declare_parameter("publish_depth_registered", publish_depth_registered_images_parameter);
+  constexpr auto publish_image_snapshot_transforms_parameter = true;
+  node_->declare_parameter("publish_image_snapshot_transforms", publish_image_snapshot_transforms_parameter);
   constexpr auto tf_root_parameter = "body";
   node_->declare_parameter("tf_root", tf_root_parameter);
   constexpr auto preferred_odom_frame_parameter = "vision";
@@ -247,6 +249,7 @@ TEST_F(RclcppParameterInterfaceEnvVarTest, GetSpotConfigFromParameters) {
   EXPECT_THAT(parameter_interface.getPublishRGBImages(), Eq(publish_rgb_images_parameter));
   EXPECT_THAT(parameter_interface.getPublishDepthImages(), Eq(publish_depth_images_parameter));
   EXPECT_THAT(parameter_interface.getPublishDepthRegisteredImages(), Eq(publish_depth_registered_images_parameter));
+  EXPECT_THAT(parameter_interface.getPublishImageSnapshotTransforms(), Eq(publish_image_snapshot_transforms_parameter));
   EXPECT_THAT(parameter_interface.getTFRoot(), Eq(tf_root_parameter));
   EXPECT_THAT(parameter_interface.getPreferredOdomFrame(), StrEq(preferred_odom_frame_parameter));
   EXPECT_THAT(parameter_interface.getFramePrefix(), Optional(kFramePrefix));
@@ -312,6 +315,7 @@ TEST_F(RclcppParameterInterfaceEnvVarTest, GetConfigDefaults) {
   EXPECT_THAT(parameter_interface.getPublishRGBImages(), IsTrue());
   EXPECT_THAT(parameter_interface.getPublishDepthImages(), IsTrue());
   EXPECT_THAT(parameter_interface.getPublishDepthRegisteredImages(), IsTrue());
+  EXPECT_THAT(parameter_interface.getPublishImageSnapshotTransforms(), IsFalse());
   EXPECT_THAT(parameter_interface.getTFRoot(), StrEq("odom"));
   EXPECT_THAT(parameter_interface.getPreferredOdomFrame(), StrEq("odom"));
   EXPECT_THAT(parameter_interface.getFramePrefix(), Eq(std::nullopt));

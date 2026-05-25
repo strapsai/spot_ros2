@@ -8,5 +8,6 @@ namespace spot_ros2::test {
 class MockStateMiddlewareHandle : public StatePublisher::MiddlewareHandle {
  public:
   MOCK_METHOD(void, publishRobotState, (const RobotStateMessages& robot_state), (override));
+  MOCK_METHOD(void, publishImageSnapshotTransforms, (const tf2_msgs::msg::TFMessage& snapshot_transforms), (override));
 };
 }  // namespace spot_ros2::test

@@ -19,6 +19,7 @@ StatePublisher::StatePublisher(const std::shared_ptr<StateClientInterface>& stat
                                std::unique_ptr<TfBroadcasterInterfaceBase> tf_broadcaster_interface,
                                std::unique_ptr<TimerInterfaceBase> timer_interface)
     : is_using_vision_{false},
+      publish_image_snapshot_transforms_{false},
       state_client_interface_{state_client_interface},
       time_sync_interface_{time_sync_api},
       middleware_handle_{std::move(middleware_handle)},
@@ -29,6 +30,7 @@ StatePublisher::StatePublisher(const std::shared_ptr<StateClientInterface>& stat
   frame_prefix_ = parameter_interface_->getFramePrefixWithDefaultFallback();
   is_using_vision_ = parameter_interface_->getPreferredOdomFrame() == "vision";
   full_tf_root_id_ = frame_prefix_ + parameter_interface_->getTFRoot();
+  publish_image_snapshot_transforms_ = parameter_interface_->getPublishImageSnapshotTransforms();
 
   const auto robot_state_rate = parameter_interface_->getRobotStateRate();
   const auto robot_state_callback_period = std::chrono::duration<double>{1.0 / robot_state_rate};
@@ -74,6 +76,9 @@ void StatePublisher::timerCallback() {
   middleware_handle_->publishRobotState(robot_state_messages);
 
   if (robot_state_messages.maybe_tf) {
+    if (publish_image_snapshot_transforms_) {
+      middleware_handle_->publishImageSnapshotTransforms(robot_state_messages.maybe_tf.value());
+    }
     tf_broadcaster_interface_->sendDynamicTransforms(robot_state_messages.maybe_tf->transforms);
   }
 }

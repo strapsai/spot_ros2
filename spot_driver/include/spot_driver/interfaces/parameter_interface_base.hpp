@@ -40,6 +40,7 @@ class ParameterInterfaceBase {
   virtual bool getPublishCompressedImages() const = 0;
   virtual bool getPublishDepthImages() const = 0;
   virtual bool getPublishDepthRegisteredImages() const = 0;
+  virtual bool getPublishImageSnapshotTransforms() const = 0;
   virtual std::string getPreferredOdomFrame() const = 0;
   virtual std::string getTFRoot() const = 0;
   virtual std::optional<std::string> getFramePrefix() const = 0;
@@ -66,6 +67,7 @@ class ParameterInterfaceBase {
   static constexpr bool kDefaultPublishCompressedImages{false};
   static constexpr bool kDefaultPublishDepthImages{true};
   static constexpr bool kDefaultPublishDepthRegisteredImages{true};
+  static constexpr bool kDefaultPublishImageSnapshotTransforms{false};
   static constexpr std::array<const char* const, 2> kValidOdomFrameNames{"odom", "vision"};
   static constexpr std::array<const char* const, 3> kValidTFRootFrameNames{"odom", "vision", "body"};
   static constexpr auto kDefaultPreferredOdomFrame = kValidOdomFrameNames[0];

@@ -18,6 +18,7 @@
 #include <spot_msgs/msg/power_state.hpp>
 #include <spot_msgs/msg/system_fault_state.hpp>
 #include <spot_msgs/msg/wi_fi_state.hpp>
+#include <tf2_msgs/msg/tf_message.hpp>
 
 namespace spot_ros2 {
 
@@ -48,6 +49,12 @@ class StateMiddlewareHandle : public StatePublisher::MiddlewareHandle {
    */
   void publishRobotState(const RobotStateMessages& robot_state_msgs) override;
 
+  /**
+   * @brief Publish private transform snapshots for consumers that need exact-time geometry without reading /tf.
+   * @param snapshot_transforms Robot-state transforms stamped at acquisition time.
+   */
+  void publishImageSnapshotTransforms(const tf2_msgs::msg::TFMessage& snapshot_transforms) override;
+
  private:
   /** @brief Shared instance of an rclcpp node to create publishers */
   std::shared_ptr<rclcpp::Node> node_;
@@ -64,6 +71,7 @@ class StateMiddlewareHandle : public StatePublisher::MiddlewareHandle {
   std::shared_ptr<rclcpp::Publisher<bosdyn_api_msgs::msg::ManipulatorState>> manipulator_state_publisher_;
   std::shared_ptr<rclcpp::Publisher<geometry_msgs::msg::Vector3Stamped>> end_effector_force_publisher_;
   std::shared_ptr<rclcpp::Publisher<spot_msgs::msg::BehaviorFaultState>> behavior_fault_state_publisher_;
+  std::shared_ptr<rclcpp::Publisher<tf2_msgs::msg::TFMessage>> image_snapshot_transforms_publisher_;
 };
 
 }  // namespace spot_ros2

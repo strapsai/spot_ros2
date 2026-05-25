@@ -15,9 +15,11 @@
 #include <spot_msgs/msg/power_state.hpp>
 #include <spot_msgs/msg/system_fault_state.hpp>
 #include <spot_msgs/msg/wi_fi_state.hpp>
+#include <tf2_msgs/msg/tf_message.hpp>
 
 namespace {
 constexpr auto kPublisherHistoryDepth = 1;
+constexpr auto kSnapshotPublisherHistoryDepth = 50;
 constexpr auto kNodeName{"spot_state_publisher"};
 
 // ROS topic names for Spot's robot state publisher
@@ -33,6 +35,7 @@ constexpr auto kSystemFaultsTopic{"status/system_faults"};
 constexpr auto kBehaviorFaultsTopic{"status/behavior_faults"};
 constexpr auto kEndEffectorForceTopic{"status/end_effector_force"};
 constexpr auto kManipulatorTopic{"manipulation_state"};
+constexpr auto kImageSnapshotTransformsTopic{"image_snapshot_transforms"};
 
 }  // namespace
 
@@ -67,6 +70,14 @@ StateMiddlewareHandle::StateMiddlewareHandle(const std::shared_ptr<rclcpp::Node>
 
 StateMiddlewareHandle::StateMiddlewareHandle(const rclcpp::NodeOptions& node_options)
     : StateMiddlewareHandle(std::make_shared<rclcpp::Node>(kNodeName, node_options)) {}
+
+void StateMiddlewareHandle::publishImageSnapshotTransforms(const tf2_msgs::msg::TFMessage& snapshot_transforms) {
+  if (!image_snapshot_transforms_publisher_) {
+    image_snapshot_transforms_publisher_ = node_->create_publisher<tf2_msgs::msg::TFMessage>(
+        kImageSnapshotTransformsTopic, makePublisherQoS(kSnapshotPublisherHistoryDepth));
+  }
+  image_snapshot_transforms_publisher_->publish(snapshot_transforms);
+}
 
 void StateMiddlewareHandle::publishRobotState(const RobotStateMessages& robot_state_msgs) {
   battery_states_publisher_->publish(robot_state_msgs.battery_states);
