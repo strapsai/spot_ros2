@@ -13,6 +13,7 @@
 #include <spot_driver/interfaces/rclcpp_wall_timer_interface.hpp>
 #include <string>
 #include <tl_expected/expected.hpp>
+#include <tf2_msgs/msg/tf_message.hpp>
 #include <unordered_map>
 
 namespace spot_ros2::images {
@@ -40,7 +41,7 @@ class ImagesMiddlewareHandle : public SpotImagePublisher::MiddlewareHandle {
    * @param image_sources Set of ImageSources. A publisher will be created for each ImageSource.
    */
   void createPublishers(const std::set<ImageSource>& image_sources, bool uncompress_images,
-                        bool publish_compressed_images) override;
+                        bool publish_compressed_images, bool publish_image_snapshot_transforms) override;
 
   /**
    * @brief Publishes (compressed) images and camera info messages to ROS 2 topics.
@@ -51,6 +52,9 @@ class ImagesMiddlewareHandle : public SpotImagePublisher::MiddlewareHandle {
   tl::expected<void, std::string> publishImages(
       const std::map<ImageSource, ImageWithCameraInfo>& images,
       const std::map<ImageSource, CompressedImageWithCameraInfo>& compressed_images) override;
+
+  tl::expected<void, std::string> publishImageSnapshotTransforms(
+      const tf2_msgs::msg::TFMessage& image_snapshot_transforms) override;
 
  private:
   /** @brief Shared instance of an rclcpp node to create publishers */
@@ -65,5 +69,8 @@ class ImagesMiddlewareHandle : public SpotImagePublisher::MiddlewareHandle {
 
   /** @brief Map between camera info topic names and camera info publishers. */
   std::unordered_map<std::string, std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::CameraInfo>>> info_publishers_;
+
+  /** @brief Publisher for per-image acquisition-time transform snapshots. */
+  std::shared_ptr<rclcpp::Publisher<tf2_msgs::msg::TFMessage>> image_snapshot_transforms_publisher_;
 };
 }  // namespace spot_ros2::images

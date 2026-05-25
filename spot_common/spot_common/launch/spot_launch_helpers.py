@@ -33,6 +33,7 @@ IMAGE_PUBLISHER_ARGS = [
     "publish_point_clouds",
     "uncompress_images",
     "publish_compressed_images",
+    "publish_image_snapshot_transforms",
     "stitch_front_images",
 ]
 
@@ -93,6 +94,13 @@ def declare_image_publisher_args() -> List[DeclareLaunchArgument]:
             "publish_compressed_images",
             default_value=False,
             description="Choose whether to publish compressed images from Spot.",
+        )
+    )
+    launch_args.append(
+        DeclareBooleanLaunchArgument(
+            "publish_image_snapshot_transforms",
+            default_value=False,
+            description="Publish per-image acquisition-time transform snapshots on a non-TF topic.",
         )
     )
     launch_args.append(

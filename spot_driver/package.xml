@@ -30,6 +30,7 @@
   <depend>sensor_msgs</depend>
   <depend>spot_msgs</depend>
   <depend>tf2_eigen</depend>
+  <depend>tf2_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>tl_expected</depend>
 

@@ -83,6 +83,7 @@ bool SpotImagePublisher::initialize() {
   const auto publish_rgb_images = parameters_->getPublishRGBImages();
   const auto publish_depth_images = parameters_->getPublishDepthImages();
   const auto publish_depth_registered_images = parameters_->getPublishDepthRegisteredImages();
+  publish_image_snapshot_transforms_ = parameters_->getPublishImageSnapshotTransforms();
   const auto has_rgb_cameras = parameters_->getHasRGBCameras();
   // always use compressed transport from SPOT, we decompress it in paralell if desired
   const auto publish_raw_rgb_cameras = false;
@@ -109,7 +110,8 @@ bool SpotImagePublisher::initialize() {
   image_request_message_ = createImageRequest(sources, has_rgb_cameras, rgb_image_quality, publish_raw_rgb_cameras);
 
   // Create a publisher for each image source
-  middleware_handle_->createPublishers(sources, uncompress_images, publish_compressed_images);
+  middleware_handle_->createPublishers(
+      sources, uncompress_images, publish_compressed_images, publish_image_snapshot_transforms_);
 
   const auto image_callback_period = std::chrono::duration<double>{1.0 / image_rate};
 
@@ -134,7 +136,10 @@ void SpotImagePublisher::timerCallback(bool uncompress_images, bool publish_comp
     return;
   }
 
-  middleware_handle_->publishImages(image_result.value().images_, image_result.value().compressed_images_);
   tf_broadcaster_->updateStaticTransforms(image_result.value().transforms_);
+  if (publish_image_snapshot_transforms_) {
+    middleware_handle_->publishImageSnapshotTransforms(image_result.value().image_snapshot_transforms_);
+  }
+  middleware_handle_->publishImages(image_result.value().images_, image_result.value().compressed_images_);
 }
 }  // namespace spot_ros2::images

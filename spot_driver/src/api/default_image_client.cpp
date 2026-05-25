@@ -31,20 +31,17 @@
 
 namespace {
 
-static const std::set<std::string> kExcludedStaticTfFrames{
-    // We exclude the odometry frames from static transforms since they are not static. We can ignore the body
-    // frame because it is a child of odom or vision depending on the preferred_odom_frame, and will be published
-    // by the non-static transform publishing that is done by the state callback
-    "body",
-    "odom",
-    "vision",
-
-    // Special case handling for hand camera frames that reference the link "arm0.link_wr1" in their transform
-    // snapshots. This name only appears in hand camera transform snapshots and is a known bug in the Spot API.
-    // We exclude publishing a static transform from arm0.link_wr1 -> body here because it depends
-    // on the arm's position and a static transform would fix it to its initial position.
-    "arm0.link_wr1",
+struct ImageTransforms {
+  std::vector<geometry_msgs::msg::TransformStamped> static_transforms;
+  tf2_msgs::msg::TFMessage snapshot_transforms;
 };
+
+std::string normalizeFrameName(const std::string& frame_name) {
+  if (frame_name == "arm0.link_wr1" || frame_name == "link_wr1") {
+    return "arm_link_wr1";
+  }
+  return frame_name;
+}
 
 tl::expected<sensor_msgs::msg::CameraInfo, std::string> toCameraInfoMsg(
     const bosdyn::api::ImageResponse& image_response, const std::string& frame_prefix,
@@ -98,28 +95,32 @@ std_msgs::msg::Header createImageHeader(const bosdyn::api::ImageCapture& image_c
   return header;
 }
 
-tl::expected<std::vector<geometry_msgs::msg::TransformStamped>, std::string> getImageTransforms(
-    const bosdyn::api::ImageResponse& image_response, const std::string& frame_prefix,
-    const google::protobuf::Duration& clock_skew) {
-  std::vector<geometry_msgs::msg::TransformStamped> out;
+tl::expected<ImageTransforms, std::string> getImageTransforms(const bosdyn::api::ImageResponse& image_response,
+                                                              const std::string& frame_prefix,
+                                                              const google::protobuf::Duration& clock_skew) {
+  ImageTransforms out;
+  const auto image_sensor_frame = image_response.shot().frame_name_image_sensor();
+  const auto timestamp_local = spot_ros2::robotTimeToLocalTime(image_response.shot().acquisition_time(), clock_skew);
+
   for (const auto& [child_frame_id, transform] :
        image_response.shot().transforms_snapshot().child_to_parent_edge_map()) {
-    // Do not publish static transforms for excluded frames
-    if (kExcludedStaticTfFrames.count(child_frame_id) > 0) {
+    if (transform.parent_frame_name().empty()) {
       continue;
     }
 
-    // Rename the parent link "arm0.link_wr1" to "link_wr1" as it appears in robot state
-    // which is used for publishing dynamic tfs elsewhere. Without this, the hand camera frame
-    // positions would never properly update as no other pipelines reference "arm0.link_wr1".
-    const auto parent_frame_id =
-        (transform.parent_frame_name() == "arm0.link_wr1") ? "arm_link_wr1" : transform.parent_frame_name();
-
+    const auto parent_frame_id = normalizeFrameName(transform.parent_frame_name());
+    const auto child_frame_id_normalized = normalizeFrameName(child_frame_id);
     const auto tform_msg = spot_ros2::toTransformStamped(
-        transform.parent_tform_child(), frame_prefix + parent_frame_id, frame_prefix + child_frame_id,
-        spot_ros2::robotTimeToLocalTime(image_response.shot().acquisition_time(), clock_skew));
+        transform.parent_tform_child(), frame_prefix + parent_frame_id, frame_prefix + child_frame_id_normalized,
+        timestamp_local);
 
-    out.push_back(tform_msg);
+    out.snapshot_transforms.transforms.push_back(tform_msg);
+
+    // Only publish the image sensor's direct extrinsic through /tf_static. Dynamic support frames
+    // such as body, feet_center, hand, and arm links remain owned by the robot-state /tf publisher.
+    if (child_frame_id == image_sensor_frame) {
+      out.static_transforms.push_back(tform_msg);
+    }
   }
   return out;
 }
@@ -202,7 +203,11 @@ tl::expected<GetImagesResult, std::string> DefaultImageClient::getImages(::bosdy
 
     const auto transforms_result = getImageTransforms(image_response, frame_prefix_, clock_skew_result.value());
     if (transforms_result.has_value()) {
-      out.transforms_.insert(out.transforms_.end(), transforms_result.value().begin(), transforms_result.value().end());
+      out.transforms_.insert(out.transforms_.end(), transforms_result.value().static_transforms.begin(),
+                             transforms_result.value().static_transforms.end());
+      out.image_snapshot_transforms_.transforms.insert(
+          out.image_snapshot_transforms_.transforms.end(), transforms_result.value().snapshot_transforms.transforms.begin(),
+          transforms_result.value().snapshot_transforms.transforms.end());
     } else {
       return tl::make_unexpected("Failed to get image transforms: " + transforms_result.error());
     }

@@ -21,9 +21,17 @@ ImagesMiddlewareHandle::ImagesMiddlewareHandle(const rclcpp::NodeOptions& node_o
     : ImagesMiddlewareHandle(std::make_shared<rclcpp::Node>("image_publisher", node_options)) {}
 
 void ImagesMiddlewareHandle::createPublishers(const std::set<ImageSource>& image_sources, bool uncompress_images,
-                                              bool publish_compressed_images) {
+                                              bool publish_compressed_images,
+                                              bool publish_image_snapshot_transforms) {
   image_publishers_.clear();
+  compressed_image_publishers_.clear();
   info_publishers_.clear();
+  image_snapshot_transforms_publisher_.reset();
+
+  if (publish_image_snapshot_transforms) {
+    image_snapshot_transforms_publisher_ = node_->create_publisher<tf2_msgs::msg::TFMessage>(
+        "image_snapshot_transforms", makePublisherQoS(kPublisherHistoryDepth));
+  }
 
   for (const auto& image_source : image_sources) {
     // Since these topic names do not have a leading `/` character, they will be published within the namespace of the
@@ -81,6 +89,15 @@ tl::expected<void, std::string> ImagesMiddlewareHandle::publishImages(
       }
     }
   }
+  return {};
+}
+
+tl::expected<void, std::string> ImagesMiddlewareHandle::publishImageSnapshotTransforms(
+    const tf2_msgs::msg::TFMessage& image_snapshot_transforms) {
+  if (!image_snapshot_transforms_publisher_) {
+    return tl::make_unexpected("No image snapshot transform publisher exists.");
+  }
+  image_snapshot_transforms_publisher_->publish(image_snapshot_transforms);
   return {};
 }
 

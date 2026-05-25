@@ -11,7 +11,12 @@ import yaml
 from launch import LaunchContext, Substitution
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 
-from spot_common.launch.spot_launch_helpers import get_name_and_prefix, substitute_launch_parameters
+from spot_common.launch.spot_launch_helpers import (
+    IMAGE_PUBLISHER_ARGS,
+    declare_image_publisher_args,
+    get_name_and_prefix,
+    substitute_launch_parameters,
+)
 
 
 class LaunchHelpersTest(unittest.TestCase):
@@ -25,6 +30,12 @@ class LaunchHelpersTest(unittest.TestCase):
         self.user_value: str = "test_username"
 
         self.context = LaunchContext()
+
+
+    def test_image_snapshot_transform_launch_arg_is_declared(self) -> None:
+        self.assertIn("publish_image_snapshot_transforms", IMAGE_PUBLISHER_ARGS)
+        declared_names = [argument.name for argument in declare_image_publisher_args()]
+        self.assertIn("publish_image_snapshot_transforms", declared_names)
 
     def test_substitute_launch_parameters(self) -> None:
         """

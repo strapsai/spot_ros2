@@ -134,7 +134,8 @@ def launch_setup(context: LaunchContext, ld: LaunchDescription) -> None:
         publish_point_clouds = False
 
     spot_image_publisher_params = {
-        key: LaunchConfiguration(key) for key in ["uncompress_images", "publish_compressed_images"]
+        key: LaunchConfiguration(key)
+        for key in ["uncompress_images", "publish_compressed_images", "publish_image_snapshot_transforms"]
     }
 
     # If using nodelets to generate registered depth images, do not retrieve and publish registered depth images using

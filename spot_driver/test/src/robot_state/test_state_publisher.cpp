@@ -107,7 +107,45 @@ TEST_F(StatePublisherTest, PublishCallbackTriggers) {
         .WillOnce(Return(tl::expected<bosdyn::api::RobotState, std::string>{makeRobotState(true)}));
     // AND THEN we publish the robot state to the appropriate topics
     EXPECT_CALL(*mock_middleware_handle, publishRobotState).Times(1);
+    // AND THEN no private snapshot is published by default
+    EXPECT_CALL(*mock_middleware_handle, publishImageSnapshotTransforms).Times(0);
     // AND THEN the robot transforms are published to TF
+    EXPECT_CALL(*mock_tf_broadcaster_interface, sendDynamicTransforms).Times(1);
+  }
+
+  // GIVEN a robot_state_publisher
+  robot_state_publisher = std::make_unique<StatePublisher>(
+      mock_state_client_interface, mock_time_sync_api, std::move(mock_middleware_handle),
+      std::move(fake_parameter_interface), std::move(mock_logger_interface), std::move(mock_tf_broadcaster_interface),
+      std::move(mock_timer_interface));
+
+  // WHEN the timer callback is triggered
+  timer_interface_ptr->trigger();
+}
+
+TEST_F(StatePublisherTest, PublishCallbackPublishesImageSnapshotTransformsWhenEnabled) {
+  // GIVEN private snapshot transform publishing is enabled
+  fake_parameter_interface->publish_image_snapshot_transforms = true;
+
+  // THEN the timer interface's setTimer function is called once and the timer_callback is set
+  auto* timer_interface_ptr = mock_timer_interface.get();
+  EXPECT_CALL(*timer_interface_ptr, setTimer).Times(1).WillOnce([&](Unused, const std::function<void()>& cb) {
+    timer_interface_ptr->onSetTimer(cb);
+  });
+
+  {
+    InSequence seq;
+    // GIVEN the robot state will contain transforms
+    // THEN we request the latest clock skew from the Spot interface
+    EXPECT_CALL(*mock_time_sync_api, getClockSkew).Times(1).WillRepeatedly(Return(google::protobuf::Duration()));
+    // AND THEN we request the robot state from the Spot interface
+    EXPECT_CALL(*mock_state_client_interface, getRobotState)
+        .WillOnce(Return(tl::expected<bosdyn::api::RobotState, std::string>{makeRobotState(true)}));
+    // AND THEN we publish the robot state to the appropriate topics
+    EXPECT_CALL(*mock_middleware_handle, publishRobotState).Times(1);
+    // AND THEN robot-state transforms are mirrored to the private snapshot topic
+    EXPECT_CALL(*mock_middleware_handle, publishImageSnapshotTransforms(_)).Times(1);
+    // AND THEN the existing robot-state TF authority still publishes dynamic TF
     EXPECT_CALL(*mock_tf_broadcaster_interface, sendDynamicTransforms).Times(1);
   }
 
@@ -140,7 +178,8 @@ TEST_F(StatePublisherTest, PublishCallbackTriggersNoTfData) {
     EXPECT_CALL(*mock_middleware_handle, publishRobotState).Times(1);
   }
 
-  // THEN no transforms are published to TF
+  // THEN no transforms are published to the private snapshot topic or TF
+  EXPECT_CALL(*mock_middleware_handle, publishImageSnapshotTransforms).Times(0);
   EXPECT_CALL(*mock_tf_broadcaster_interface, sendDynamicTransforms).Times(0);
 
   // GIVEN a robot_state_publisher
@@ -177,7 +216,8 @@ TEST_F(StatePublisherTest, PublishCallbackTriggersFailGetRobotState) {
 
   // THEN we do not publish a robot state
   EXPECT_CALL(*mock_middleware_handle, publishRobotState).Times(0);
-  // THEN we do not publish to TF
+  // THEN we do not publish to the private snapshot topic or TF
+  EXPECT_CALL(*mock_middleware_handle, publishImageSnapshotTransforms).Times(0);
   EXPECT_CALL(*mock_tf_broadcaster_interface, sendDynamicTransforms).Times(0);
 
   // GIVEN a robot_state_publisher
@@ -209,7 +249,8 @@ TEST_F(StatePublisherTest, PublishCallbackTriggersFailGetClockSkew) {
 
   // THEN we do not publish a robot state
   EXPECT_CALL(*mock_middleware_handle, publishRobotState).Times(0);
-  // THEN we do not publish to TF
+  // THEN we do not publish to the private snapshot topic or TF
+  EXPECT_CALL(*mock_middleware_handle, publishImageSnapshotTransforms).Times(0);
   EXPECT_CALL(*mock_tf_broadcaster_interface, sendDynamicTransforms).Times(0);
 
   // GIVEN a robot_state_publisher

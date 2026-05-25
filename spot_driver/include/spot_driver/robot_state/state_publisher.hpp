@@ -29,6 +29,7 @@ class StatePublisher {
    public:
     virtual ~MiddlewareHandle() = default;
     virtual void publishRobotState(const RobotStateMessages& robot_state_msgs) = 0;
+    virtual void publishImageSnapshotTransforms(const tf2_msgs::msg::TFMessage& snapshot_transforms) = 0;
   };
 
   /**
@@ -65,6 +66,8 @@ class StatePublisher {
   std::string frame_prefix_;
 
   bool is_using_vision_;
+
+  bool publish_image_snapshot_transforms_;
 
   // Interface classes to interact with Spot and the middleware.
   std::shared_ptr<StateClientInterface> state_client_interface_;

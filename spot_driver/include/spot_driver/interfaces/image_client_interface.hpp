@@ -6,6 +6,7 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <spot_driver/api/spot_image_sources.hpp>
 #include <spot_driver/types.hpp>
+#include <tf2_msgs/msg/tf_message.hpp>
 #include <tl_expected/expected.hpp>
 
 #include <map>
@@ -18,6 +19,7 @@ struct GetImagesResult {
   std::map<ImageSource, ImageWithCameraInfo> images_;
   std::map<ImageSource, CompressedImageWithCameraInfo> compressed_images_;
   std::vector<geometry_msgs::msg::TransformStamped> transforms_;
+  tf2_msgs::msg::TFMessage image_snapshot_transforms_;
 };
 
 /**

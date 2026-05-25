@@ -49,10 +49,12 @@ class SpotImagePublisher {
     virtual ~MiddlewareHandle() = default;
 
     virtual void createPublishers(const std::set<ImageSource>& image_sources, bool uncompress_images,
-                                  bool publish_compressed_images) = 0;
+                                  bool publish_compressed_images, bool publish_image_snapshot_transforms) = 0;
     virtual tl::expected<void, std::string> publishImages(
         const std::map<ImageSource, ImageWithCameraInfo>& images,
         const std::map<ImageSource, CompressedImageWithCameraInfo>& compressed_images) = 0;
+    virtual tl::expected<void, std::string> publishImageSnapshotTransforms(
+        const tf2_msgs::msg::TFMessage& image_snapshot_transforms) = 0;
   };
 
   /**
@@ -105,5 +107,6 @@ class SpotImagePublisher {
   std::unique_ptr<TimerInterfaceBase> timer_;
 
   bool has_arm_;
+  bool publish_image_snapshot_transforms_ = false;
 };
 }  // namespace spot_ros2::images
